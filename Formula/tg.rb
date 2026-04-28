@@ -1,18 +1,12 @@
 class Tg < Formula
   desc "macOS Telegram 聊天记录读取 CLI 工具"
   homepage "https://github.com/xiaotianxt/tg"
+  url "https://github.com/xiaotianxt/tg/releases/download/v0.2.2/tg-v0.2.2-darwin-arm64.tar.gz"
+  sha256 "a706e1607af298a0fd1fa284d939be21d93782c04cd4eea2274caf5220f07088"
   license "MIT"
-  version "0.1.0"
+  version "0.2.2"
 
-  on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/xiaotianxt/tg/releases/download/v0.1.0/tg-v0.1.0-darwin-arm64.tar.gz"
-      sha256 "e5dee583b164f9f7c12d21c15af8b0faa57af9d0bab11c4ce7f3ebba81d9ebf4"
-    else
-      url "https://github.com/xiaotianxt/tg/releases/download/v0.1.0/tg-v0.1.0-darwin-amd64.tar.gz"
-      sha256 "0000000000000000000000000000000000000000000000000000000000000000"
-    end
-  end
+  depends_on arch: :arm64
 
   head do
     url "https://github.com/xiaotianxt/tg.git", branch: "main"
@@ -33,6 +27,6 @@ class Tg < Formula
   end
 
   test do
-    system "#{bin}/tg", "--help"
+    system "#{bin}/tg", "--version"
   end
 end
