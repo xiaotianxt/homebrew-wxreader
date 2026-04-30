@@ -1,9 +1,9 @@
 class Tg < Formula
   desc "macOS Telegram 聊天记录读取 CLI 工具"
   homepage "https://github.com/xiaotianxt/tg"
-  url "https://github.com/xiaotianxt/tg/releases/download/v1.3.0/tg-v1.3.0-darwin-arm64.tar.gz"
-  version "1.3.0"
-  sha256 "a5d02b9a860bb4aad92db3d376ac6817e5a6b22ae2fe7997a22e40f399d3f66f"
+  url "https://github.com/xiaotianxt/tg/releases/download/v1.4.0/tg-v1.4.0-darwin-arm64.tar.gz"
+  version "1.4.0"
+  sha256 "f05215a71f7ba4b5cf762450acd1bc6b0a9064aa536e813ea2775e2f0e3e5a94"
   license "MIT"
 
   depends_on arch: :arm64
