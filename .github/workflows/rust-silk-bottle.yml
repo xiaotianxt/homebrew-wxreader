@@ -56,30 +56,39 @@ jobs:
           echo "json=${json}" >>"$GITHUB_OUTPUT"
           echo "tar=${remote_filename}" >>"$GITHUB_OUTPUT"
 
+      - name: Merge bottle block
+        run: |
+          brew bottle --merge --write --no-commit "${{ steps.bottle.outputs.json }}"
+          cp "$(brew --repository xiaotianxt/tap)/Formula/rust-silk.rb" Formula/rust-silk.rb
+
+      - name: Check formula update
+        id: formula
+        run: |
+          if git diff --quiet -- Formula/rust-silk.rb; then
+            echo "Formula already has this bottle block."
+            echo "changed=false" >>"$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >>"$GITHUB_OUTPUT"
+          fi
+
       - name: Upload bottle release asset
+        if: steps.formula.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${{ steps.meta.outputs.tag }}"
           tarball="${{ steps.bottle.outputs.tar }}"
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$tarball" --clobber
+            gh release upload "$tag" "$tarball"
           else
             gh release create "$tag" "$tarball" \
               --title "rust-silk ${{ steps.meta.outputs.version }} bottle" \
               --notes "Homebrew bottle for rust-silk ${{ steps.meta.outputs.version }}."
           fi
 
-      - name: Merge bottle block
-        run: brew bottle --merge --write --no-commit "${{ steps.bottle.outputs.json }}"
-
       - name: Commit formula update
+        if: steps.formula.outputs.changed == 'true'
         run: |
-          if git diff --quiet -- Formula/rust-silk.rb; then
-            echo "Formula already has this bottle block."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Formula/rust-silk.rb

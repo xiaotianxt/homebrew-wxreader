@@ -8,7 +8,7 @@ class RustSilk < Formula
   bottle do
     root_url "https://github.com/xiaotianxt/homebrew-tap/releases/download/rust-silk-0.1.0"
     rebuild 1
-    sha256 cellar: :any, arm64_sequoia: "b252da47ef28407175aa95ea991441b252a43977a2bc66a7bee91403a04fb012"
+    sha256 cellar: :any_skip_relocation, arm64_sequoia: "ce486d15c7d52835ea489794d3b42c77513b7153c37862a81413f67b24a51328"
   end
 
   depends_on "rust" => :build
