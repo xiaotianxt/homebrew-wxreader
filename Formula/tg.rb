@@ -7,6 +7,7 @@ class Tg < Formula
   license "MIT"
 
   depends_on arch: :arm64
+  depends_on "rust-silk"
 
   def install
     bin.install "tg"
