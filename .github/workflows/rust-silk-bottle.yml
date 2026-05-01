@@ -1,0 +1,87 @@
+name: Bottle rust-silk
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bottle:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify arm64 runner
+        run: test "$(uname -m)" = "arm64"
+
+      - name: Tap local checkout
+        run: brew tap --force xiaotianxt/tap "$GITHUB_WORKSPACE"
+
+      - name: Read formula version
+        id: meta
+        run: |
+          version="$(
+            ruby -ne 'if %r{/rust-silk/([^/]+)/download} =~ $_ then puts $1 end' \
+              Formula/rust-silk.rb | head -n1
+          )"
+          test -n "$version"
+          echo "version=${version}" >>"$GITHUB_OUTPUT"
+          echo "tag=rust-silk-${version}" >>"$GITHUB_OUTPUT"
+          echo "root_url=https://github.com/${GITHUB_REPOSITORY}/releases/download/rust-silk-${version}" >>"$GITHUB_OUTPUT"
+
+      - name: Build for bottle
+        run: brew install --build-bottle --force xiaotianxt/tap/rust-silk
+
+      - name: Create bottle
+        id: bottle
+        run: |
+          brew bottle \
+            --json \
+            --keep-old \
+            --force-core-tap \
+            --root-url "${{ steps.meta.outputs.root_url }}" \
+            xiaotianxt/tap/rust-silk
+
+          json="$(ls rust-silk--*.bottle.json)"
+          local_filename="$(
+            ruby -rjson -e 'data = JSON.parse(File.read(ARGV[0])); puts data.values[0]["bottle"]["tags"].values[0]["local_filename"]' "$json"
+          )"
+          remote_filename="$(
+            ruby -rjson -e 'data = JSON.parse(File.read(ARGV[0])); puts data.values[0]["bottle"]["tags"].values[0]["filename"]' "$json"
+          )"
+          cp "$local_filename" "$remote_filename"
+
+          echo "json=${json}" >>"$GITHUB_OUTPUT"
+          echo "tar=${remote_filename}" >>"$GITHUB_OUTPUT"
+
+      - name: Upload bottle release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          tarball="${{ steps.bottle.outputs.tar }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$tarball" --clobber
+          else
+            gh release create "$tag" "$tarball" \
+              --title "rust-silk ${{ steps.meta.outputs.version }} bottle" \
+              --notes "Homebrew bottle for rust-silk ${{ steps.meta.outputs.version }}."
+          fi
+
+      - name: Merge bottle block
+        run: brew bottle --merge --write --no-commit "${{ steps.bottle.outputs.json }}"
+
+      - name: Commit formula update
+        run: |
+          if git diff --quiet -- Formula/rust-silk.rb; then
+            echo "Formula already has this bottle block."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/rust-silk.rb
+          git commit -m "rust-silk ${{ steps.meta.outputs.version }} bottle"
+          git push
